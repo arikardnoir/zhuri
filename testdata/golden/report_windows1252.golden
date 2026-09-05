@@ -1,0 +1,7 @@
+windows1252.yaml
+  não é UTF-8 válido — detetado Windows-1252 (confiança 95%)
+  L1  offset 6   descri\xe7\xe3o: "Servi\xe7o de entrega"
+                       ^^^^^^^^         ^^^^
+  L3  offset 49   regi\xe3o: sudeste
+                      ^^^^
+  2 linhas afetadas → corrigido para UTF-8
