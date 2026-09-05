@@ -1,20 +1,22 @@
 # zhuri
 
-Corretor de encoding para ficheiros de configuração. Não formata YAML, não valida esquema - deteta bytes que não são UTF-8, descobre de que encoding vieram, e converte.
+An encoding fixer for config files. It doesn't format YAML, doesn't validate schemas — it detects bytes that aren't UTF-8, figures out where they actually came from, and converts.
 
-## O problema
+## The problem
 
-Se já apanhaste isto, vais reconhecer na hora:
+If you've hit this before, you'll recognize it instantly:
 
 ```
 err: yaml: invalid trailing UTF-8 octet
 ```
 
-A primeira reação de toda a gente é abrir o ficheiro, olhar para a indentação, contar espaços, duvidar da própria sanidade. Mas o YAML está bem. O problema é que alguém - normalmente o Excel, ou um editor com o locale errado, ou um `scp` feito a partir do Windows sem pensar duas vezes - gravou o ficheiro em Windows-1252 em vez de UTF-8. `descrição` virou `descri\xe7\xe3o`. `região` virou `regi\xe3o`. Cada acento português é um ou mais bytes que, interpretados como UTF-8, simplesmente não fazem sentido, e o parser da tua ferramenta de configuração morre a meio.
+Everyone's first reaction is to open the file, stare at the indentation, count spaces, question their own sanity. But the YAML is fine. What actually happened is that someone — usually Excel, or an editor with the wrong locale, or an `scp` run from Windows without a second thought — saved the file as Windows-1252 instead of UTF-8. `descrição` became `descri\xe7\xe3o`. `região` became `regi\xe3o`. Every accented character in that text is one or more bytes that, read as UTF-8, simply don't make sense, and your config tool's parser dies halfway through.
 
-O `yamllint` não te ajuda aqui - ele só te diz que o ficheiro é inválido, que tu já sabias. O zhuri lê os bytes, percebe que aquilo é Windows-1252 (ou ISO-8859-1, ou UTF-16 com BOM), mostra-te exatamente onde estava o problema, e - se pedires - corrige.
+`yamllint` won't help you here — it just tells you the file is invalid, which you already knew. zhuri reads the raw bytes, figures out that it's Windows-1252 (or ISO-8859-1, or UTF-16 with a BOM), shows you exactly where it broke, and — if you ask it to — fixes it.
 
-## Como se usa
+## Usage
+
+The tool itself talks back in Portuguese (that's the language it was originally built for), so the output below is real, unedited terminal output:
 
 ```
 $ zhuri config/app.yaml
@@ -27,7 +29,9 @@ app.yaml
   2 linhas afetadas → usa --write para corrigir
 ```
 
-Sem flags, o zhuri nunca escreve nada - é sempre pré-visualização. Só quando confias no que viste é que passas `--write`:
+("not valid UTF-8 — detected Windows-1252 (95% confidence)", "2 lines affected → use --write to fix".)
+
+With no flags, zhuri never writes anything — it's always a preview. You only pass `--write` once you trust what you saw:
 
 ```
 $ zhuri --write config/app.yaml
@@ -45,80 +49,80 @@ chave: valor
 região: sudeste
 ```
 
-Correr o zhuri outra vez sobre um ficheiro já corrigido não faz nada - ele valida UTF-8 primeiro e, se já estiver tudo bem, não toca. Isso é deliberado: quero poder meter isto num pre-commit hook sem medo de que ele ande a reescrever ficheiros a cada `git commit`.
+Running zhuri again on a file that's already fixed does nothing — it checks UTF-8 validity first, and if everything's already fine, it leaves the file alone. That's deliberate: I want to be able to drop this into a pre-commit hook without worrying it'll go around rewriting files on every `git commit`.
 
-A dor a sério aparece quando tens uma pasta `config/` inteira com dezenas de ficheiros deste tipo, alguns bons, alguns não. Para isso há `-r`:
+The real pain shows up when you have a whole `config/` directory full of these, some fine, some not. That's what `-r` is for:
 
 ```
 $ zhuri -r ./config/
 ```
 
-## Instalação
+## Installation
 
 ```
-git clone <este-repositório>
+git clone <this-repository>
 cd zhuri
 make build
 sudo make install
 ```
 
-Isto compila um binário estático (`CGO_ENABLED=0`) e copia-o para `/usr/local/bin/zhuri`. Estático quer dizer sem dependência de libc - o mesmo binário corre em Debian, Alpine, Fedora, o que for, sem te preocupares com versões de glibc.
+This builds a static binary (`CGO_ENABLED=0`) and copies it to `/usr/local/bin/zhuri`. Static means no libc dependency — the same binary runs on Debian, Alpine, Fedora, whatever, without you having to think about glibc versions.
 
-Sem privilégios de root, instala num prefixo teu:
+Without root, install into a prefix of your own:
 
 ```
 make install PREFIX=$HOME/.local
 ```
 
-(garante que `$HOME/.local/bin` está no `PATH`.) Para desinstalar, `make uninstall` com o mesmo `PREFIX` que usaste.
+(make sure `$HOME/.local/bin` is on your `PATH`.) To uninstall, `make uninstall` with the same `PREFIX` you used.
 
-Se só quiseres o binário sem o instalar em lado nenhum, `make build` deixa-o em `./zhuri`. E se tiveres o Go instalado e preferires o caminho mais direto, `go install ./cmd/zhuri` também funciona a partir da raiz do repositório.
+If you just want the binary without installing it anywhere, `make build` leaves it at `./zhuri`. And if you have Go installed and prefer the more direct route, `go install ./cmd/zhuri` also works from the repository root.
 
 ## Flags
 
 ```
-  -w, --write        aplica as correções (por defeito só pré-visualiza)
-      --from <enc>   força o encoding de origem (windows-1252, iso-8859-1, utf-16, ...)
-  -r, --recursive    percorre pastas recursivamente
-      --backup       cria .bak antes de escrever
-      --strip-bom    remove BOM de UTF-8 ao gravar
-      --ext <lista>  extensões a processar (defeito: yaml,yml,json,xml,csv,env,properties,toml,ini,txt)
-      --max-size <MB> limite de tamanho por ficheiro em MB (defeito: 50)
-      --quiet        só imprime ficheiros com problema
-      --no-color     desliga cores
+  -w, --write        apply the fixes (preview-only by default)
+      --from <enc>   force the source encoding (windows-1252, iso-8859-1, utf-16, ...)
+  -r, --recursive    walk directories recursively
+      --backup       create a .bak file before writing
+      --strip-bom    strip a UTF-8 BOM when writing
+      --ext <list>   extensions to process (default: yaml,yml,json,xml,csv,env,properties,toml,ini,txt)
+      --max-size <MB> per-file size limit in MB (default: 50)
+      --quiet        only print files that have a problem
+      --no-color     turn off colors
   -v, --version
   -h, --help
 ```
 
-O `--from` existe para quando a deteção automática erra - e vai errar, de vez em quando. Windows-1252 e ISO-8859-1 partilham praticamente todos os bytes acima de 0xA0, por isso um ficheiro puramente latino sem nenhum byte na gama 0x80–0x9F é ambíguo por natureza; o zhuri assume Windows-1252 porque é de longe o caso mais comum em ficheiros gravados no Windows em português, mas se souberes que não é isso, força com `--from iso-8859-1`.
+`--from` exists for when auto-detection gets it wrong — and it will, sometimes. Windows-1252 and ISO-8859-1 share almost every byte above 0xA0, so a purely Latin file with nothing in the 0x80–0x9F range is inherently ambiguous; zhuri assumes Windows-1252 because it's by far the more common case for files saved on Windows, but if you know it isn't, force it with `--from iso-8859-1`.
 
-Cores desligam-se sozinhas quando a saída não é um terminal, ou quando `NO_COLOR` está definida - nunca vais ver códigos ANSI a poluir um pipe ou um log de CI.
+Colors turn themselves off when stdout isn't a terminal, or when `NO_COLOR` is set — you'll never see ANSI codes leaking into a pipe or a CI log.
 
-Códigos de saída: `0` nada a fazer ou tudo corrigido, `1` ficaram problemas por corrigir (normalmente porque correste sem `--write`), `2` erro de execução (caminho inexistente, flag inválida, etc.).
+Exit codes: `0` nothing to do or everything fixed, `1` problems remain unfixed (usually because you ran without `--write`), `2` execution error (path doesn't exist, invalid flag, etc.).
 
-## Segurança
+## Safety
 
-Isto lê e reescreve ficheiros de configuração de outras pessoas, por isso fui cuidadoso com um conjunto de coisas que considero não negociáveis:
+This reads and rewrites other people's config files, so I was careful about a handful of things I consider non-negotiable:
 
-- Nunca segue symlinks - nem como argumento direto, nem dentro de uma pasta percorrida com `-r`. São reportados como ignorados, não seguidos.
-- Ficheiros especiais (pipes, sockets, devices) são ignorados; só ficheiros regulares são tocados.
-- Há um limite de tamanho (50 MB por defeito, ajustável com `--max-size`) verificado antes de ler o ficheiro inteiro para memória.
-- Deteta binários (byte nulo, ou densidade alta de bytes de controlo) e recusa-se a tocar-lhes - transcodificar um binário não corrige nada, destrói.
-- A escrita é atómica: grava para um ficheiro temporário na mesma pasta e só depois faz `rename` por cima do original. Um crash a meio nunca deixa o ficheiro pela metade.
-- As permissões do ficheiro original são preservadas.
-- Um ficheiro problemático nunca aborta o lote inteiro - o erro fica reportado e o zhuri segue para o próximo.
+- Never follows symlinks — not as a direct argument, not inside a directory walked with `-r`. They're reported as skipped, not followed.
+- Special files (pipes, sockets, devices) are skipped; only regular files are touched.
+- There's a size limit (50 MB by default, adjustable with `--max-size`) checked before reading the whole file into memory.
+- Detects binaries (a null byte, or a high density of control characters) and refuses to touch them — transcoding a binary doesn't fix anything, it destroys it.
+- Writes are atomic: it writes to a temporary file in the same directory and only then `rename`s it over the original. A crash halfway through never leaves the file half-written.
+- Original file permissions are preserved.
+- One bad file never aborts the whole batch — the error gets reported and zhuri moves on to the next one.
 
-## Limitações
+## Limitations
 
-A deteção de encoding é heurística, não é magia. Quando não há nenhum byte na gama 0x80–0x9F, Windows-1252 e ISO-8859-1 são indistinguíveis a partir dos bytes sozinhos - o zhuri escolhe Windows-1252 por ser o caso mais frequente, mas pode estar errado no teu caso específico. Usa `--from` quando isso acontecer.
+Encoding detection is heuristic, not magic. When there's no byte in the 0x80–0x9F range, Windows-1252 and ISO-8859-1 are indistinguishable from the bytes alone — zhuri picks Windows-1252 because it's the more frequent case, but it can be wrong for your specific file. Use `--from` when that happens.
 
-Também não tenta adivinhar Shift-JIS, GBK, ou qualquer encoding fora da família latina - o alvo é explicitamente o cenário de acentos portugueses gravados no Windows. Se o teu problema é outro, esta ferramenta provavelmente não é a certa.
+It also doesn't try to guess Shift-JIS, GBK, or anything outside the Latin family — the target is explicitly the "Portuguese accents saved on Windows" scenario. If your problem is something else, this probably isn't the right tool.
 
-E se um ficheiro foi genuinamente truncado (falta o fim, não é só o encoding errado), o zhuri deteta a sequência UTF-8 incompleta no fim e corta-a para deixar o resto do ficheiro válido - mas o conteúdo que faltava continua perdido. Não há como recuperar dados que nunca chegaram a ser escritos.
+And if a file was genuinely truncated (the end is missing, it's not just the wrong encoding), zhuri detects the incomplete UTF-8 sequence at the end and cuts it off to leave the rest of the file valid — but the content that was cut off is still gone. There's no recovering data that was never actually written.
 
-## Hook de pre-commit / CI
+## Pre-commit hook / CI
 
-Localmente, para nunca mais deixar um acento partido entrar num commit:
+Locally, to stop a broken accent from ever entering a commit again:
 
 ```bash
 #!/bin/sh
@@ -129,17 +133,17 @@ zhuri -r config/ || {
 }
 ```
 
-Em CI, o mesmo comando funciona sem alterações: sem `--write`, o zhuri só verifica, e o código de saída `1` falha o passo quando encontra algo por corrigir.
+In CI, the same command works unchanged: without `--write`, zhuri only checks, and exit code `1` fails the step when it finds something to fix.
 
-## Testes
+## Tests
 
 ```
 go test ./...
 go test ./... -bench=. -benchmem
 ```
 
-ou, com o Makefile: `make check` (vet + gofmt + testes) e `make bench`.
+or, with the Makefile: `make check` (vet + gofmt + tests) and `make bench`.
 
-## Licença
+## License
 
-MIT. Ver [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
