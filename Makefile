@@ -13,16 +13,25 @@ BINDIR  := $(DESTDIR)$(PREFIX)/bin
 
 GO ?= go
 
+GO_SOURCES := $(shell find cmd internal -name '*.go') go.mod go.sum
+
 .PHONY: all build install uninstall test bench vet fmt-check check clean
 
 all: build
 
+build: $(BINARY)
+
+# Depending on the actual binary file (not a .PHONY target) means `sudo make
+# install` right after a plain `make build` reuses the binary you already
+# built as yourself instead of trying to recompile as root — which usually
+# fails, since `sudo` resets PATH and root can't see your `go` binary.
+#
 # CGO_ENABLED=0 gives a static binary with no libc dependency, so it runs
 # unmodified on any Linux distro regardless of glibc/musl version.
-build:
+$(BINARY): $(GO_SOURCES)
 	CGO_ENABLED=0 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BINARY) $(CMD)
 
-install: build
+install: $(BINARY)
 	install -d $(BINDIR)
 	install -m 0755 $(BINARY) $(BINDIR)/$(BINARY)
 	@echo "instalado em $(BINDIR)/$(BINARY)"
