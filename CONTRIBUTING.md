@@ -34,12 +34,13 @@ Nothing exotic, just:
 - No comments that just restate what the code does. A comment should exist
   only when the *why* isn't obvious from the code itself - a workaround, a
   non-obvious invariant, a subtle edge case.
-- Match the existing structure: `internal/detect`, `internal/fix`,
-  `internal/report`, `internal/walk` each own one concern. If your change
-  doesn't fit cleanly into one of those, that's worth a sentence in the
-  issue/PR description explaining why a new package makes sense.
+- Match the existing structure: `detect`, `fix`, `report`, `walk` each own
+  one concern and live at the module root so they can be imported by other
+  Go programs, not just `cmd/zhuri`. If your change doesn't fit cleanly
+  into one of those, that's worth a sentence in the issue/PR description
+  explaining why a new package makes sense.
 - Tests are table-driven where that fits naturally (see `*_test.go` in any
-  `internal/` package for the pattern). Add fixtures to `testdata/` rather
+  package for the pattern). Add fixtures to `testdata/` rather
   than inlining large byte literals when the input needs specific raw
   bytes (see how the existing Windows-1252/UTF-16 fixtures were built).
 - No new dependencies unless there's genuinely no reasonable way to do it

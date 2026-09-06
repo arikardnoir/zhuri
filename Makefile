@@ -13,7 +13,7 @@ BINDIR  := $(DESTDIR)$(PREFIX)/bin
 
 GO ?= go
 
-GO_SOURCES := $(shell find cmd internal -name '*.go') go.mod go.sum
+GO_SOURCES := $(shell find cmd detect fix report walk -name '*.go') go.mod go.sum
 
 .PHONY: all build install uninstall test bench vet fmt-check check clean
 
