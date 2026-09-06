@@ -112,7 +112,7 @@ func resolve(data []byte, result detect.Result, stripBOM bool) (newData []byte, 
 		return data[:result.TruncateAt], statusLine, issues, false
 
 	case detect.KindForeignEncoding:
-		statusLine = fmt.Sprintf("não é UTF-8 válido — detetado %s (confiança %d%%)", result.Name, int(result.Confidence*100))
+		statusLine = fmt.Sprintf("não é UTF-8 válido - detetado %s (confiança %d%%)", result.Name, int(result.Confidence*100))
 
 		isUTF16 := result.BOM == detect.BOMUTF16LE || result.BOM == detect.BOMUTF16BE
 		if !isUTF16 {

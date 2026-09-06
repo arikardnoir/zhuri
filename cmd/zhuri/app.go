@@ -164,7 +164,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		var footer string
 		switch {
 		case outcome.failed:
-			footer = "não foi possível corrigir automaticamente — usa --from para forçar o encoding"
+			footer = "não foi possível corrigir automaticamente - usa --from para forçar o encoding"
 			unresolvedProblem = true
 		case opt.write:
 			footer = withCount(outcome.issues, "corrigido para UTF-8")
