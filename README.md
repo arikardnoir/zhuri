@@ -144,6 +144,11 @@ go test ./... -bench=. -benchmem
 
 or, with the Makefile: `make check` (vet + gofmt + tests) and `make bench`.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues go through
+[SECURITY.md](SECURITY.md) instead, not a public issue.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

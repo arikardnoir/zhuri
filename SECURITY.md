@@ -44,9 +44,9 @@ regular bugs, please file them as a normal issue.
 ## Supported versions
 
 | Version      | Supported          |
-| ------------ | ------------------- |
-| latest minor | :white_check_mark:  |
-| older        | :x:                 |
+| ------------ | -------------------|
+| latest minor | yes                |
+| older        | no                 |
 
 Only the latest minor release gets security fixes. There's no long-term
 support branch at this stage of the project.
