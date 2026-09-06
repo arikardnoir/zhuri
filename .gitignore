@@ -1,2 +1,16 @@
+# Compiled binary (built by `make build` / `go build ./cmd/zhuri`)
 /zhuri
+*.exe
+*.test
+
+# Test/build output
+*.out
+coverage.out
+*.cover
+
+# Build/distribution directories, if ever used
+/dist/
+/bin/
+
+# Runtime artifacts created by zhuri itself (the --backup flag)
 *.bak
