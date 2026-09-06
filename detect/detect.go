@@ -218,19 +218,39 @@ func detectPayload(data []byte) Result {
 		ratio = float64(accented) / float64(highBytes)
 	}
 
-	confidence := 0.75 + 0.2*ratio
+	// Windows-1252 and ISO-8859-1 decode identically for every byte >= 0xA0;
+	// the only place they differ is 0x80-0x9F, which Windows-1252 uses for
+	// printable punctuation (curly quotes, em dash, etc.) and ISO-8859-1
+	// leaves as C1 control codes that essentially never appear in real text.
+	// So a byte in that range is real evidence for Windows-1252 specifically;
+	// without it, the two are indistinguishable from the bytes alone, and
+	// guessing "Windows-1252" anyway would overstate what we actually know.
+	// ISO-8859-1 is reported instead in that case, at lower confidence - the
+	// decoded output is byte-for-byte the same regardless of which of the
+	// two gets picked here, so this only changes what gets reported, not
+	// what a --write actually produces.
 	if has8x {
-		confidence = 0.9 + 0.09*ratio
+		confidence := 0.9 + 0.09*ratio
+		if confidence > 0.99 {
+			confidence = 0.99
+		}
+		return Result{
+			Kind:       KindForeignEncoding,
+			Name:       "Windows-1252",
+			Confidence: confidence,
+			Encoding:   charmap.Windows1252,
+		}
 	}
+
+	confidence := 0.75 + 0.2*ratio
 	if confidence > 0.99 {
 		confidence = 0.99
 	}
-
 	return Result{
 		Kind:       KindForeignEncoding,
-		Name:       "Windows-1252",
+		Name:       "ISO-8859-1",
 		Confidence: confidence,
-		Encoding:   charmap.Windows1252,
+		Encoding:   charmap.ISO8859_1,
 	}
 }
 

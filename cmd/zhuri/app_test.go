@@ -43,8 +43,11 @@ func TestPreviewModeDoesNotWrite(t *testing.T) {
 	if code != exitProblems {
 		t.Errorf("code = %d, want %d", code, exitProblems)
 	}
-	if !strings.Contains(stdout, "Windows-1252") {
-		t.Errorf("stdout devia mencionar Windows-1252, got: %s", stdout)
+	// windows1252.yaml has no byte in 0x80-0x9F, so it's genuinely
+	// ambiguous between Windows-1252 and ISO-8859-1 - check for the
+	// generic problem marker rather than pinning a specific guess.
+	if !strings.Contains(stdout, "não é UTF-8 válido") {
+		t.Errorf("stdout devia reportar o problema de encoding, got: %s", stdout)
 	}
 	after, _ := os.ReadFile(path)
 	if !bytes.Equal(before, after) {
