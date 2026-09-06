@@ -10,7 +10,7 @@ import (
 
 func readFixture(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", name))
+	data, err := os.ReadFile(filepath.Join("..", "testdata", name))
 	if err != nil {
 		t.Fatalf("ler fixture %s: %v", name, err)
 	}
@@ -93,7 +93,7 @@ func TestPrintReportGolden(t *testing.T) {
 	footer := LineCountLabel(len(issues)) + " → corrigido para UTF-8"
 	PrintReport(&buf, false, "windows1252.yaml", "não é UTF-8 válido - detetado Windows-1252 (confiança 95%)", issues, footer)
 
-	want, err := os.ReadFile(filepath.Join("..", "..", "testdata", "golden", "report_windows1252.golden"))
+	want, err := os.ReadFile(filepath.Join("..", "testdata", "golden", "report_windows1252.golden"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,9 +7,9 @@ import (
 	"io"
 	"strings"
 
-	"zhuri/internal/detect"
-	"zhuri/internal/report"
-	"zhuri/internal/walk"
+	"zhuri/detect"
+	"zhuri/report"
+	"zhuri/walk"
 )
 
 // version is set at build time via -ldflags "-X main.version=...". A plain

@@ -5,9 +5,9 @@ import (
 	"io"
 	"os"
 
-	"zhuri/internal/detect"
-	"zhuri/internal/fix"
-	"zhuri/internal/report"
+	"zhuri/detect"
+	"zhuri/fix"
+	"zhuri/report"
 )
 
 // fileOutcome is what happened when zhuri looked at one file.

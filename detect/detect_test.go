@@ -8,7 +8,7 @@ import (
 
 func readFixture(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", name))
+	data, err := os.ReadFile(filepath.Join("..", "testdata", name))
 	if err != nil {
 		t.Fatalf("ler fixture %s: %v", name, err)
 	}
@@ -149,8 +149,36 @@ func TestDetectFixtures(t *testing.T) {
 	}
 }
 
-func TestDetectWindows1252Offsets(t *testing.T) {
+func TestDetectAmbiguousFixtureDefaultsToISO88591(t *testing.T) {
+	// windows1252.yaml has no byte in 0x80-0x9F, so Windows-1252 and
+	// ISO-8859-1 are indistinguishable from its bytes alone (the fixture
+	// name reflects how it was produced, not what Detect can prove about
+	// it). ISO-8859-1 is the honest answer here, at reduced confidence -
+	// see the comment above the has8x branch in detectPayload.
 	data := readFixture(t, "windows1252.yaml")
+	result := Detect(data)
+	if result.Kind != KindForeignEncoding {
+		t.Fatalf("Kind = %v, want KindForeignEncoding", result.Kind)
+	}
+	if result.Name != "ISO-8859-1" {
+		t.Errorf("Name = %q, want ISO-8859-1", result.Name)
+	}
+	if result.Confidence < 0.9 {
+		t.Errorf("Confidence = %v, want >= 0.9 (every high byte in this fixture is a recognized accent)", result.Confidence)
+	}
+	if result.Confidence >= 0.9+0.09 {
+		t.Errorf("Confidence = %v, should stay below the has8x confidence floor", result.Confidence)
+	}
+	if result.Encoding == nil {
+		t.Fatal("Encoding não deveria ser nil")
+	}
+}
+
+func TestDetectConfidentWindows1252(t *testing.T) {
+	// A byte in 0x80-0x9F is real evidence for Windows-1252 specifically:
+	// ISO-8859-1 leaves that range as C1 control codes, which essentially
+	// never show up in real text. 0x97 here is an em dash typed on Windows.
+	data := readFixture(t, "windows1252_em_dash.yaml")
 	result := Detect(data)
 	if result.Kind != KindForeignEncoding {
 		t.Fatalf("Kind = %v, want KindForeignEncoding", result.Kind)
@@ -159,7 +187,7 @@ func TestDetectWindows1252Offsets(t *testing.T) {
 		t.Errorf("Name = %q, want Windows-1252", result.Name)
 	}
 	if result.Confidence < 0.9 {
-		t.Errorf("Confidence = %v, want >= 0.9 (has 0x80-0x9F byte range signal)", result.Confidence)
+		t.Errorf("Confidence = %v, want >= 0.9 (0x80-0x9F byte present)", result.Confidence)
 	}
 	if result.Encoding == nil {
 		t.Fatal("Encoding não deveria ser nil")
