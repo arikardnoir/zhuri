@@ -91,7 +91,7 @@ func TestPrintReportGolden(t *testing.T) {
 
 	var buf bytes.Buffer
 	footer := LineCountLabel(len(issues)) + " → corrigido para UTF-8"
-	PrintReport(&buf, false, "windows1252.yaml", "não é UTF-8 válido — detetado Windows-1252 (confiança 95%)", issues, footer)
+	PrintReport(&buf, false, "windows1252.yaml", "não é UTF-8 válido - detetado Windows-1252 (confiança 95%)", issues, footer)
 
 	want, err := os.ReadFile(filepath.Join("..", "..", "testdata", "golden", "report_windows1252.golden"))
 	if err != nil {
