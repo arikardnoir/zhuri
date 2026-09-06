@@ -1,0 +1,26 @@
+version: 2
+updates:
+  # Go module dependencies (currently just golang.org/x/text).
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      go-minor-and-patch:
+        applies-to: "version-updates"
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
+
+  # Actions used in the workflows below. Outdated actions are a real supply
+  # chain risk, not just noise, so these get updated too.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        applies-to: "version-updates"
+        update-types: ["minor", "patch"]
+        patterns: ["*"]

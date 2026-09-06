@@ -1,0 +1,42 @@
+# Alternative to this file: GitHub's "default setup" for code scanning
+# (Settings -> Security -> Code scanning -> CodeQL analysis -> Set up ->
+# Default) turns CodeQL on with one click, with no workflow file to
+# maintain. This file is only needed for the "advanced setup" path; if
+# default setup is enabled instead, this workflow is redundant and can be
+# deleted.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Mondays at 03:23 UTC. Arbitrary off-peak time, not midnight, to avoid
+    # piling onto the queue everyone else's "run at 00:00" cron picks.
+    - cron: "23 3 * * 1"
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (go)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          languages: go
+          build-mode: autobuild
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          category: "/language:go"
