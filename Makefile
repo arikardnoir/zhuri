@@ -23,7 +23,7 @@ build: $(BINARY)
 
 # Depending on the actual binary file (not a .PHONY target) means `sudo make
 # install` right after a plain `make build` reuses the binary you already
-# built as yourself instead of trying to recompile as root — which usually
+# built as yourself instead of trying to recompile as root - which usually
 # fails, since `sudo` resets PATH and root can't see your `go` binary.
 #
 # CGO_ENABLED=0 gives a static binary with no libc dependency, so it runs
