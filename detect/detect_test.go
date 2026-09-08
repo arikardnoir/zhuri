@@ -132,6 +132,9 @@ func TestDetectFixtures(t *testing.T) {
 		{"valid_utf8.yaml", KindAlreadyValid},
 		{"ascii.yaml", KindAlreadyValid},
 		{"windows1252.yaml", KindForeignEncoding},
+		{"french.yaml", KindForeignEncoding},
+		{"spanish.yaml", KindForeignEncoding},
+		{"german.yaml", KindForeignEncoding},
 		{"utf16le_bom.txt", KindForeignEncoding},
 		{"utf8_bom.txt", KindAlreadyValid},
 		{"truncated.yaml", KindTruncatedTail},
@@ -171,6 +174,59 @@ func TestDetectAmbiguousFixtureDefaultsToISO88591(t *testing.T) {
 	}
 	if result.Encoding == nil {
 		t.Fatal("Encoding não deveria ser nil")
+	}
+}
+
+func TestIsLatinAccentByte(t *testing.T) {
+	cases := []struct {
+		name string
+		b    byte
+		want bool
+	}{
+		{"ASCII letter", 'A', false},
+		{"below the accented range", 0xBF, false}, // ¿ - punctuation, not a letter
+		{"multiplication sign", 0xD7, false},
+		{"division sign", 0xF7, false},
+		{"ç - Portuguese/French", 0xE7, true},
+		{"ñ - Spanish", 0xF1, true},
+		{"Ñ - Spanish", 0xD1, true},
+		{"ö - German", 0xF6, true},
+		{"ß - German", 0xDF, true},
+		{"ù - French", 0xF9, true},
+		{"å - Scandinavian", 0xE5, true},
+		{"ÿ - top of the range", 0xFF, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := isLatinAccentByte(tc.b); got != tc.want {
+				t.Errorf("isLatinAccentByte(%#02x) = %v, want %v", tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDetectOtherLatinLanguages(t *testing.T) {
+	// Windows-1252/ISO-8859-1 aren't Portuguese-specific: every Western
+	// European language sharing this codepage should get the same
+	// high-confidence treatment once its accented letters are recognized.
+	for _, fixture := range []string{"french.yaml", "spanish.yaml", "german.yaml"} {
+		t.Run(fixture, func(t *testing.T) {
+			data := readFixture(t, fixture)
+			result := Detect(data)
+			if result.Kind != KindForeignEncoding {
+				t.Fatalf("Kind = %v, want KindForeignEncoding", result.Kind)
+			}
+			if result.Confidence < 0.9 {
+				t.Errorf("Confidence = %v, want >= 0.9 (every high byte in %s is a recognized accent)", result.Confidence, fixture)
+			}
+			decoded, err := result.Encoding.NewDecoder().Bytes(data)
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			if !IsValidUTF8(decoded) {
+				t.Errorf("decoded output for %s is not valid UTF-8", fixture)
+			}
+		})
 	}
 }
 

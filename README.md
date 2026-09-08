@@ -114,9 +114,9 @@ This reads and rewrites other people's config files, so I was careful about a ha
 
 ## Limitations
 
-Encoding detection is heuristic, not magic. When there's no byte in the 0x80–0x9F range, Windows-1252 and ISO-8859-1 are indistinguishable from the bytes alone - zhuri picks Windows-1252 because it's the more frequent case, but it can be wrong for your specific file. Use `--from` when that happens.
+Encoding detection is heuristic, not magic. When there's no byte in the 0x80–0x9F range, Windows-1252 and ISO-8859-1 decode identically, so they're indistinguishable from the bytes alone - zhuri reports ISO-8859-1 in that case (there's no evidence either way, so it doesn't claim more certainty than it has), and only reports Windows-1252 when a byte in that range backs it up. Either way, use `--from` if you know the file's actual encoding better than the guess.
 
-It also doesn't try to guess Shift-JIS, GBK, or anything outside the Latin family - the target is explicitly the "Portuguese accents saved on Windows" scenario. If your problem is something else, this probably isn't the right tool.
+It also doesn't try to guess Shift-JIS, GBK, or anything outside the Latin family - the target is Western European Latin-script text (Portuguese, Spanish, French, German, and the like) saved on Windows. If your problem is something else, this probably isn't the right tool.
 
 And if a file was genuinely truncated (the end is missing, it's not just the wrong encoding), zhuri detects the incomplete UTF-8 sequence at the end and cuts it off to leave the rest of the file valid - but the content that was cut off is still gone. There's no recovering data that was never actually written.
 
