@@ -1,7 +1,8 @@
 // Package detect identifies whether a file's bytes are valid UTF-8 and, when
 // they are not, guesses the most likely source encoding. The guess is biased
-// towards the encodings that actually show up in the wild for Portuguese
-// text saved on Windows: Windows-1252 and ISO-8859-1.
+// towards Windows-1252 and ISO-8859-1, the encodings that actually show up
+// in the wild for Western European Latin-script text - Portuguese, Spanish,
+// French, German, and friends - saved on Windows.
 package detect
 
 import (
@@ -207,7 +208,7 @@ func detectPayload(data []byte) Result {
 		}
 		if b >= 0xA0 {
 			highBytes++
-			if isPortugueseAccentByte(b) {
+			if isLatinAccentByte(b) {
 				accented++
 			}
 		}
@@ -254,16 +255,13 @@ func detectPayload(data []byte) Result {
 	}
 }
 
-// isPortugueseAccentByte reports whether b, interpreted as a Latin-1 /
-// Windows-1252 code point, is a common accented letter used in Portuguese.
-func isPortugueseAccentByte(b byte) bool {
-	switch b {
-	case 0xE0, 0xE1, 0xE2, 0xE3, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB,
-		0xEC, 0xED, 0xEE, 0xF3, 0xF4, 0xF5, 0xFA, 0xFC,
-		0xC0, 0xC1, 0xC2, 0xC3, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB,
-		0xCD, 0xD3, 0xD4, 0xD5, 0xDA, 0xDC:
-		return true
-	default:
-		return false
-	}
+// isLatinAccentByte reports whether b, interpreted as a Latin-1 /
+// Windows-1252 code point, is an accented Latin letter. 0xC0-0xFF is
+// accented letters for every Western European language that shares this
+// codepage - Portuguese, Spanish, French, Italian, German, the Scandinavian
+// languages, and more - with exactly two exceptions sitting in the middle
+// of that range: 0xD7 (multiplication sign) and 0xF7 (division sign), which
+// are symbols, not letters.
+func isLatinAccentByte(b byte) bool {
+	return b >= 0xC0 && b != 0xD7 && b != 0xF7
 }
